@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  username  String   @unique
+  email     String   @unique
+  password  String
+  eNumber        String?
+  passportNumber String?
+  image          String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents Document[]
+  deal      Deal?
+  visaProgress VisaProgress?
+}
+
+enum DocumentType {
+  E_NUM
+  DRIVING_LICENCE
+  MEDICAL_REPORT
+  VISA_COPY
+  PROTECTOR
+  TICKET
+  E_STAMP
+  NEVTECK
+}
+
+model Document {
+  id         String       @id @default(cuid())
+  clientId   String
+  type       DocumentType
+  url        String
+  filename   String
+  mimeType   String       @default("application/octet-stream")
+  fileId     String       @default("")
+  uploadedAt DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, type])
+}
+
+model Deal {
+  id          String   @id @default(cuid())
+  clientId    String   @unique
+  totalAmount Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  payments Payment[]
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  dealId    String
+  amount    Float
+  date      DateTime
+  note      String?
+  createdAt DateTime @default(now())
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model VisaProgress {
+  id          String    @id @default(cuid())
+  clientId    String    @unique
+  step1Done   Boolean   @default(false)
+  step2Done   Boolean   @default(false)
+  step3Done   Boolean   @default(false)
+  step4Done   Boolean   @default(false)
+  step5Done   Boolean   @default(false)
+  step6Done   Boolean   @default(false)
+  step7Done   Boolean   @default(false)
+  step1At     DateTime?
+  step2At     DateTime?
+  step3At     DateTime?
+  step4At     DateTime?
+  step5At     DateTime?
+  step6At     DateTime?
+  step7At     DateTime?
+  note        String?
+  updatedAt   DateTime  @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
